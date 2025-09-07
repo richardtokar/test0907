@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Serverless Vibes — Advice + Doggo</title>
+  <title>NBA Serverless Vibes</title>
   <style>
     :root {
       --bg1: #0ea5e9;
@@ -23,25 +23,22 @@
       place-items: center;
       background: radial-gradient(1200px 800px at 20% 10%, var(--bg1), transparent),
                   radial-gradient(1400px 900px at 80% 90%, var(--bg2), #0b1020);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+      font-family: ui-sans-serif, system-ui, Segoe UI, Roboto, Arial;
       color: var(--text);
     }
     .app {
-      width: min(900px, 92vw);
+      width: min(700px, 92vw);
       background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
       border: 1px solid rgba(255,255,255,0.12);
       border-radius: 20px;
       padding: 20px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
       backdrop-filter: blur(6px);
-      margin: 0 auto; /* keep centered */
+      margin: 0 auto;
+      text-align: center;
     }
-    header {
-      display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
-      margin-bottom: 12px;
-    }
-    h1 { font-size: clamp(20px, 3.6vw, 30px); margin: 0; letter-spacing: 0.2px; }
-    .sub { color: var(--muted); font-size: 14px }
+    h1 { font-size: clamp(22px, 3.6vw, 32px); margin: 0; }
+    .sub { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
     .btn {
       appearance: none; border: none; cursor: pointer;
       padding: 12px 16px; border-radius: 12px;
@@ -51,38 +48,69 @@
       transition: transform .05s ease, filter .2s ease;
     }
     .btn:active { transform: translateY(1px) scale(.99); }
-    .btn[disabled] { filter: saturate(.2) brightness(.8); cursor: not-allowed; }
-    .grid {
-      display: grid;
-      gap: 16px;
-      grid-template-columns: 1fr 1fr; /* equal columns for balance */
-      align-items: stretch;
-      justify-items: center;
-    }
-    @media (max-width: 820px){ .grid { grid-template-columns: 1fr; } }
     .card {
       background: var(--card);
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: 16px;
-      overflow: hidden;
-      min-height: 280px;
-      width: 100%; /* stretch inside grid cell */
+      padding: 20px;
+      margin-top: 20px;
+      min-height: 140px;
     }
-    .pane { padding: 16px; }
-    .advice {
-      font-size: clamp(18px, 2.2vw, 22px);
-      line-height: 1.45;
-      position: relative;
+    .game { font-size: 18px; margin-bottom: 10px; }
+    .score { font-size: 16px; color: var(--accent); }
+    .meta { font-size: 14px; color: var(--muted); margin-top: 8px; }
+    .ok { color: var(--ok); }
+    .err { color: var(--err); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>🏀 NBA Serverless Vibes</h1>
+    <div class="sub">Data from <code>balldontlie.io</code> (no API key required)</div>
+    <button id="go" class="btn">New Game</button>
+
+    <div class="card" id="card">
+      <div id="game" class="game">Click “New Game” to fetch a random NBA matchup!</div>
+      <div id="score" class="score"></div>
+      <div id="meta" class="meta"></div>
+    </div>
+  </div>
+
+  <script>
+    const gameEl = document.getElementById("game");
+    const scoreEl = document.getElementById("score");
+    const metaEl = document.getElementById("meta");
+    const btn = document.getElementById("go");
+
+    async function getRandomGame() {
+      try {
+        gameEl.textContent = "Loading game data...";
+        scoreEl.textContent = "";
+        metaEl.textContent = "";
+
+        // Pick a random game ID from 2023 season (IDs range ~1–1300 for season)
+        const randomId = Math.floor(Math.random() * 1200) + 1;
+        const res = await fetch(`https://www.balldontlie.io/api/v1/games/${randomId}`);
+        if (!res.ok) throw new Error("API error");
+        const data = await res.json();
+
+        // Sometimes the random ID may not exist, handle that
+        if (!data.home_team || !data.visitor_team) {
+          gameEl.textContent = "No game found — try again!";
+          return;
+        }
+
+        gameEl.textContent = `${data.home_team.full_name} vs ${data.visitor_team.full_name}`;
+        scoreEl.textContent = `${data.home_team_score} - ${data.visitor_team_score}`;
+        metaEl.textContent = `Season: ${data.season} • Date: ${new Date(data.date).toLocaleDateString()}`;
+      } catch (err) {
+        gameEl.textContent = "⚠️ Error fetching game";
+        scoreEl.textContent = "";
+        metaEl.textContent = err.message;
+      }
     }
-    .advice::before {
-      content: "“"; position: absolute; left: -10px; top: -6px; color: var(--accent); font-size: 36px;
-    }
-    .meta { color: var(--muted); font-size: 13px; margin-top: 10px; }
-    .imgWrap { aspect-ratio: 16/10; background:#0a0f1a; display:grid; place-items:center; }
-    .imgWrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .footer {
-      display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap: wrap;
-      margin-top: 14px; color: var(--muted); font-size: 13px;
-    }
-    .badge { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,0.12);}
-    .ok { color: var
+
+    btn.addEventListener("click", getRandomGame);
+  </script>
+</body>
+</html>
