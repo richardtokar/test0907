@@ -2,115 +2,68 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>NBA Serverless Vibes</title>
+  <title>🎮 Game Serverless Vibes</title>
   <style>
-    :root {
-      --bg1: #0ea5e9;
-      --bg2: #22c55e;
-      --card: #0b1220;
-      --text: #e6eefc;
-      --muted: #9fb0c8;
-      --accent: #f59e0b;
-      --ok: #10b981;
-      --err: #ef4444;
-    }
-    * { box-sizing: border-box; }
     body {
       margin: 0;
-      min-height: 100dvh;
+      min-height: 100vh;
       display: grid;
       place-items: center;
-      background: radial-gradient(1200px 800px at 20% 10%, var(--bg1), transparent),
-                  radial-gradient(1400px 900px at 80% 90%, var(--bg2), #0b1020);
-      font-family: ui-sans-serif, system-ui, Segoe UI, Roboto, Arial;
-      color: var(--text);
+      background: linear-gradient(135deg, #6d28d9, #3b82f6);
+      font-family: Arial, sans-serif;
+      color: #fff;
     }
     .app {
-      width: min(700px, 92vw);
-      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
-      border: 1px solid rgba(255,255,255,0.12);
+      width: min(600px, 90%);
+      background: rgba(0,0,0,0.6);
       border-radius: 20px;
       padding: 20px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
-      backdrop-filter: blur(6px);
-      margin: 0 auto;
       text-align: center;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.5);
     }
-    h1 { font-size: clamp(22px, 3.6vw, 32px); margin: 0; }
-    .sub { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
-    .btn {
-      appearance: none; border: none; cursor: pointer;
-      padding: 12px 16px; border-radius: 12px;
-      background: linear-gradient(180deg, #1f2937, #0f172a);
-      color: #fff; font-weight: 600; letter-spacing: .2px;
-      box-shadow: 0 6px 18px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06);
-      transition: transform .05s ease, filter .2s ease;
+    h1 { margin: 0 0 10px; }
+    button {
+      background: #22c55e;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+      color: #fff;
+      transition: 0.2s;
     }
-    .btn:active { transform: translateY(1px) scale(.99); }
-    .card {
-      background: var(--card);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 16px;
-      padding: 20px;
-      margin-top: 20px;
-      min-height: 140px;
+    button:hover { background: #16a34a; }
+    img {
+      max-width: 100%;
+      border-radius: 12px;
+      margin-top: 15px;
     }
-    .game { font-size: 18px; margin-bottom: 10px; }
-    .score { font-size: 16px; color: var(--accent); }
-    .meta { font-size: 14px; color: var(--muted); margin-top: 8px; }
-    .ok { color: var(--ok); }
-    .err { color: var(--err); }
+    .title { font-size: 20px; margin-top: 10px; }
+    .desc { font-size: 14px; color: #d1d5db; margin-top: 5px; }
   </style>
 </head>
 <body>
   <div class="app">
-    <h1>🏀 NBA Serverless Vibes</h1>
-    <div class="sub">Data from <code>balldontlie.io</code> (no API key required)</div>
-    <button id="go" class="btn">New Game</button>
-
-    <div class="card" id="card">
-      <div id="game" class="game">Click “New Game” to fetch a random NBA matchup!</div>
-      <div id="score" class="score"></div>
-      <div id="meta" class="meta"></div>
-    </div>
+    <h1>🎮 Serverless Game Vibes</h1>
+    <p>Click below to fetch a random free-to-play game.</p>
+    <button onclick="loadGame()">New Game</button>
+    <div id="game"></div>
   </div>
 
   <script>
-    const gameEl = document.getElementById("game");
-    const scoreEl = document.getElementById("score");
-    const metaEl = document.getElementById("meta");
-    const btn = document.getElementById("go");
+    async function loadGame() {
+      const res = await fetch("https://www.freetogame.com/api/games");
+      const data = await res.json();
+      const random = data[Math.floor(Math.random() * data.length)];
 
-    async function getRandomGame() {
-      try {
-        gameEl.textContent = "Loading game data...";
-        scoreEl.textContent = "";
-        metaEl.textContent = "";
-
-        // Pick a random game ID from 2023 season (IDs range ~1–1300 for season)
-        const randomId = Math.floor(Math.random() * 1200) + 1;
-        const res = await fetch(`https://www.balldontlie.io/api/v1/games/${randomId}`);
-        if (!res.ok) throw new Error("API error");
-        const data = await res.json();
-
-        // Sometimes the random ID may not exist, handle that
-        if (!data.home_team || !data.visitor_team) {
-          gameEl.textContent = "No game found — try again!";
-          return;
-        }
-
-        gameEl.textContent = `${data.home_team.full_name} vs ${data.visitor_team.full_name}`;
-        scoreEl.textContent = `${data.home_team_score} - ${data.visitor_team_score}`;
-        metaEl.textContent = `Season: ${data.season} • Date: ${new Date(data.date).toLocaleDateString()}`;
-      } catch (err) {
-        gameEl.textContent = "⚠️ Error fetching game";
-        scoreEl.textContent = "";
-        metaEl.textContent = err.message;
-      }
+      document.getElementById("game").innerHTML = `
+        <div class="title">${random.title}</div>
+        <img src="${random.thumbnail}" alt="${random.title}">
+        <div class="desc">${random.short_description}</div>
+        <p><a href="${random.game_url}" target="_blank" style="color:#60a5fa">Play now</a></p>
+      `;
     }
-
-    btn.addEventListener("click", getRandomGame);
   </script>
 </body>
 </html>
